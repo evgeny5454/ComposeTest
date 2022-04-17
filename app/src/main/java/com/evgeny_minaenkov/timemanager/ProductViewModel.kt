@@ -27,6 +27,15 @@ class ProductViewModel : ViewModel() {
     private val _pickupStoresCount: MutableLiveData<Int> = MutableLiveData(10)
     val pickupStoresCount: LiveData<Int> = _pickupStoresCount
 
+    private val _isInWishList: MutableLiveData<Boolean> = MutableLiveData(false)
+    val isInWishList: LiveData<Boolean> = _isInWishList
+
+    private val _isInCompare: MutableLiveData<Boolean> = MutableLiveData(false)
+    val isInCompare: LiveData<Boolean> = _isInCompare
+
+    private val _imageHeaderView: MutableLiveData<String> = MutableLiveData("https://cdn1.ozone.ru/s3/multimedia-r/6068976099.jpg")
+    val imageHeaderView: LiveData<String> = _imageHeaderView
+
     private val _characteristics: MutableLiveData<List<CharacteristicsModel>> = MutableLiveData(
         listOf(
             CharacteristicsModel("Толщина (мм)", "12.5"),
@@ -36,6 +45,19 @@ class ProductViewModel : ViewModel() {
         )
     )
     val characteristics: LiveData<List<CharacteristicsModel>> = _characteristics
+
+
+    fun toggleWishList(){
+        _isInWishList.value?.let {
+            _isInWishList.postValue(!it)
+        }
+    }
+
+    fun toggleCompareList(){
+        _isInCompare.value?.let {
+            _isInCompare.postValue(!it)
+        }
+    }
 
     fun addToCart() {
         var count = _itemsInCart.value

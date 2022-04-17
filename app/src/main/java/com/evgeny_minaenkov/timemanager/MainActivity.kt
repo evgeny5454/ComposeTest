@@ -4,7 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.*
@@ -16,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Black
 import androidx.compose.ui.graphics.Color.Companion.White
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -24,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.evgeny_minaenkov.timemanager.ui.theme.TimeManagerTheme
+import com.evgeny_minaenkov.timemanager.views.*
 
 val brownGreyColor = Color(0xFF959595)
 val whiteTwo = Color(0xFFF9F9F9)
@@ -46,30 +50,21 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun Subtitle5(text: String, modifier: Modifier = Modifier) = Text(
-    modifier = modifier,
-    text = text,
-    style = TextStyle(color = Black, fontSize = 14.sp, fontWeight = FontWeight.Normal)
-)
-
-@Composable
-fun Caption(text: String, modifier: Modifier = Modifier) = Text(
-    modifier = modifier,
-    text = text,
-    style = TextStyle(color = brownGreyColor, fontSize = 12.sp, fontWeight = FontWeight.Normal)
-)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ProductScreen(productViewModel: ProductViewModel = viewModel()) {
     val sku by productViewModel.sku.observeAsState()
     val title by productViewModel.title.observeAsState()
+    val isInWishList by productViewModel.isInWishList.observeAsState(false)
+    val isInCompare by productViewModel.isInCompare.observeAsState(false)
+
+
     LazyColumn(content = {
         stickyHeader {
             Toolbar()
         }
-        item { ImageHeader() }
+        item { ImageHeader(productViewModel = productViewModel) }
         item {
             Text(
                 text = sku.orEmpty(),
@@ -97,8 +92,46 @@ fun ProductScreen(productViewModel: ProductViewModel = viewModel()) {
         item { CountView(productViewModel = productViewModel) }
         item { HeaderView(height = 68.dp, title = "Способы получения") }
         item { DeliveryPickupView(productViewModel = productViewModel) }
+        item {
+            Column() {
+                RouteButton(
+                    model = RouteButtonModel(
+                        routeId = "InStoreAvailabale",
+                        title = "Наличие в магазинах"
+                    ), onClick = {
+                        //Toast.makeText(, "All Chars", Toast.LENGTH_SHORT).show()
+                    })
+                ActionButton(model = ActionButtonModel(
+                    actionId = "AddToWishList",
+                    title = "Добавить в список",
+                    selectedTitle = "Добавлено в список",
+                    isSelected = isInWishList
+                ), onClick = { _, _ ->
+                    productViewModel.toggleWishList()
+                })
+            }
+        }
         item { HeaderView(height = 68.dp, title = "Характеристики") }
-        item { CharacteristicsView(productViewModel = productViewModel)}
+        item { CharacteristicsView(productViewModel = productViewModel) }
+        item {
+            Column() {
+                RouteButton(
+                    model = RouteButtonModel(
+                        routeId = "AllCharsScreen",
+                        title = "Все характеристики"
+                    ), onClick = {
+                        //Toast.makeText(, "All Chars", Toast.LENGTH_SHORT).show()
+                    })
+                ActionButton(model = ActionButtonModel(
+                    actionId = "AddToCompare",
+                    title = "Добавить к сравнению",
+                    selectedTitle = "Добавлено в список",
+                    isSelected = isInCompare
+                ), onClick = { _, _ ->
+                    productViewModel.toggleCompareList()
+                })
+            }
+        }
     }, modifier = Modifier.fillMaxSize())
 }
 
@@ -124,16 +157,23 @@ fun CharacteristicsView(productViewModel: ProductViewModel) {
 @Composable
 fun CharacteristicsCell(model: CharacteristicsModel) {
     Column {
-        Row(modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, end = 24.dp)
-            .height(60.dp),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 24.dp)
+                .height(60.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = model.title, modifier = Modifier.weight(0.6f), style = TextStyle(color = brownGreyColor))
-            Text(text = model.value, modifier = Modifier
-                .weight(0.4f)
-                .padding(8.dp), style = TextStyle(color = Black))
+            Text(
+                text = model.title,
+                modifier = Modifier.weight(0.6f),
+                style = TextStyle(color = brownGreyColor)
+            )
+            Text(
+                text = model.value, modifier = Modifier
+                    .weight(0.4f)
+                    .padding(8.dp), style = TextStyle(color = Black)
+            )
         }
     }
     Divider(color = veryLightPink)
@@ -296,11 +336,12 @@ fun RatingRowView() {
 }
 
 @Composable
-fun ImageHeader() {
-    Box(
+fun ImageHeader(productViewModel: ProductViewModel) {
+    val image by productViewModel.imageHeaderView.observeAsState("")
+    ImageView(
+        imageUri = image,
         modifier = Modifier
-            .background(color = White)
-            .height(300.dp)
+            .height(260.dp)
             .fillMaxWidth()
     )
 }
@@ -309,11 +350,24 @@ fun ImageHeader() {
 fun Toolbar() {
     Row(
         modifier = Modifier
-            .height(44.dp)
+            .height(56.dp)
             .fillMaxWidth()
-            .background(color = MaterialTheme.colors.background)
+            .background(color = MaterialTheme.colors.background),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = "Back", modifier = Modifier.weight(1f))
-        Text(text = "Menu")
+        Image(painterResource(id = R.drawable.ic_back),
+            contentDescription = "Back button",
+            modifier = Modifier.clickable {
+
+            }.size(56.dp).padding(16.dp)
+        )
+        Spacer(modifier = Modifier.weight(1f))
+
+        Image(painterResource(id = R.drawable.ic_more),
+            contentDescription = "Back more",
+            modifier = Modifier.clickable {
+
+            }.size(56.dp).padding(16.dp)
+        )
     }
 }
